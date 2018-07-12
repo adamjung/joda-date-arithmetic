@@ -1,0 +1,8 @@
+{
+  "name": "joda-date-arithmetic",
+  "version": "1.0.0",
+  "description": "Wrapper functionality for js-joda",
+  "main": "index.js",
+  "author": "adam_jung <ajung91@hotmail.com>",
+  "license": "MIT"
+}
