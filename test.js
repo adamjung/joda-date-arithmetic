@@ -1,5 +1,12 @@
-var assert = require('assert')
-  , dateMath = require('./index')
+// copied from jquense/date-arithmetic to uphold the same behavior
+const assert = require('assert'), dateMath = require('./index')
+const jsJoda = require('js-joda')
+const { ZonedDateTime, nativeJs, convert, LocalDate } = jsJoda
+
+function jodaConvert(zdt) {
+  return convert(zdt).toDate()
+}
+
 
 var date = new Date(
       2014 /* year */
@@ -28,6 +35,8 @@ var afterDaylightSavingTime = new Date(
     , 0   /* sec */
     , 0);  /* ms */
 
+
+
 console.log('---- Accessors ----------------------------')
 //accessors
 assert.equal(dateMath.year(date), 2014, 'year is equal to 2014')
@@ -42,31 +51,31 @@ assert.equal(dateMath.milliseconds(date), 5,    'ms is equal to 5')
 console.log(' passed')
 console.log('---- start of ----------------------------')
 
-assert.equal(+dateMath.startOf(date, 'year'), +(new Date(2014,0,1,0,0,0,0)), 'startOf year')
-assert.equal(+dateMath.startOf(date, 'month'), +(new Date(2014,1,1,0,0,0,0)), 'startOf month')
-assert.equal(+dateMath.startOf(date, 'day'), +(new Date(2014,1,18,0,0,0,0)), 'startOf day')
-assert.equal(+dateMath.startOf(date, 'week'), +(new Date(2014,1,16,0,0,0,0)), 'startOf day')
-assert.equal(+dateMath.startOf(date, 'hours'), +(new Date(2014,1,18,8,0,0,0)), 'startOf hours')
-assert.equal(+dateMath.startOf(date, 'minutes'), +(new Date(2014,1,18,8,25,0,0)), 'startOf minutes')
-assert.equal(+dateMath.startOf(date, 'seconds'), +(new Date(2014,1,18,8,25,30,0)), 'startOf seconds')
+assert.equal(+jodaConvert(dateMath.startOf(date, 'year')), +(new Date(2014,0,1,0,0,0,0)), 'startOf year')
+assert.equal(+jodaConvert(dateMath.startOf(date, 'month')), +(new Date(2014,1,1,0,0,0,0)), 'startOf month')
+assert.equal(+jodaConvert(dateMath.startOf(date, 'day')), +(new Date(2014,1,18,0,0,0,0)), 'startOf day')
+assert.equal(+jodaConvert(dateMath.startOf(date, 'week')), +(new Date(2014,1,16,0,0,0,0)), 'startOf day')
+assert.equal(+jodaConvert(dateMath.startOf(date, 'hours')), +(new Date(2014,1,18,8,0,0,0)), 'startOf hours')
+assert.equal(+jodaConvert(dateMath.startOf(date, 'minutes')), +(new Date(2014,1,18,8,25,0,0)), 'startOf minutes')
+assert.equal(+jodaConvert(dateMath.startOf(date, 'seconds')), +(new Date(2014,1,18,8,25,30,0)), 'startOf seconds')
 
 console.log(' passed')
 console.log('---- Date Math ----------------------------')
 
-assert.equal(+dateMath.add(date, 1, 'century'), +(new Date(2114, 1, 18, 8, 25, 30, 5)), 'add century')
-assert.equal(+dateMath.add(date, 1, 'decade'),  +(new Date(2024, 1, 18, 8, 25, 30, 5)), 'add decade')
-assert.equal(+dateMath.add(date, 1, 'year'),    +(new Date(2015, 1, 18, 8, 25, 30, 5)), 'add year')
-assert.equal(+dateMath.add(date, 1, 'month'),   +(new Date(2014, 2, 18, 8, 25, 30, 5)), 'add month')
-assert.equal(+dateMath.add(date, 1, 'day'),     +(new Date(2014, 1, 19, 8, 25, 30, 5)), 'add day')
-assert.equal(+dateMath.add(date, 1, 'week'),    +(new Date(2014, 1, 25, 8, 25, 30, 5)), 'add week')
-assert.equal(+dateMath.add(date, 1, 'hours'),   +(new Date(2014, 1, 18, 9, 25, 30, 5)), 'add hours')
-assert.equal(+dateMath.add(date, 1, 'minutes'), +(new Date(2014, 1, 18, 8, 26, 30, 5)), 'add minutes')
-assert.equal(+dateMath.add(date, 1, 'seconds'), +(new Date(2014, 1, 18, 8, 25, 31, 5)), 'add seconds')
-assert.equal(+dateMath.add(date, 1, 'milliseconds'), +(new Date(2014, 1, 18, 8, 25, 30, 6)), 'add milliseconds')
-assert.equal(+dateMath.subtract(date, 24, 'month'), +dateMath.subtract(date, 2, 'year'), 'month rollover')
+assert.equal(+jodaConvert(dateMath.add(date, 1, 'century')), +(new Date(2114, 1, 18, 8, 25, 30, 5)), 'add century')
+assert.equal(+jodaConvert(dateMath.add(date, 1, 'decade')),  +(new Date(2024, 1, 18, 8, 25, 30, 5)), 'add decade')
+assert.equal(+jodaConvert(dateMath.add(date, 1, 'year')),    +(new Date(2015, 1, 18, 8, 25, 30, 5)), 'add year')
+assert.equal(+jodaConvert(dateMath.add(date, 1, 'month')),   +(new Date(2014, 2, 18, 8, 25, 30, 5)), 'add month')
+assert.equal(+jodaConvert(dateMath.add(date, 1, 'day')),     +(new Date(2014, 1, 19, 8, 25, 30, 5)), 'add day')
+assert.equal(+jodaConvert(dateMath.add(date, 1, 'week')),    +(new Date(2014, 1, 25, 8, 25, 30, 5)), 'add week')
+assert.equal(+jodaConvert(dateMath.add(date, 1, 'hours')),   +(new Date(2014, 1, 18, 9, 25, 30, 5)), 'add hours')
+assert.equal(+jodaConvert(dateMath.add(date, 1, 'minutes')), +(new Date(2014, 1, 18, 8, 26, 30, 5)), 'add minutes')
+assert.equal(+jodaConvert(dateMath.add(date, 1, 'seconds')), +(new Date(2014, 1, 18, 8, 25, 31, 5)), 'add seconds')
+assert.equal(+jodaConvert(dateMath.add(date, 1, 'milliseconds')), +(new Date(2014, 1, 18, 8, 25, 30, 6)), 'add milliseconds')
+assert.equal(+jodaConvert(dateMath.subtract(date, 24, 'month')), +jodaConvert(dateMath.subtract(date, 2, 'year')), 'month rollover')
 
-assert.equal(+dateMath.max(date, new Date(2013, 0, 1, 0, 0, 0, 0)), +date, 'max')
-assert.equal(+dateMath.min(date, new Date(2015, 0, 1, 0, 0, 0, 0)), +date, 'min')
+assert.equal(+jodaConvert(dateMath.max(date, new Date(2013, 0, 1, 0, 0, 0, 0))), +date, 'max')
+assert.equal(+jodaConvert(dateMath.min(date, new Date(2015, 0, 1, 0, 0, 0, 0))), +date, 'min')
 
 assert.ok(dateMath.eq(date,   new Date(2014,0,1,0,0,0,0),  'year'), 'eq year')
 assert.ok(dateMath.neq(date,  new Date(2013,0,1,0,0,0,0),  'year'), 'neq year')
@@ -83,6 +92,7 @@ assert.ok(!dateMath.inRange(new Date(2013,0,1,0,0,0,0), date,  new Date(2014,5,1
 assert.ok(dateMath.inRange(date,  null,  new Date(2014,5,1,0,0,0,0)), 'inRange year')
 assert.ok(dateMath.inRange(date,  new Date(2013,0,1,0,0,0,0), null),  'inRange year')
 
+console.log("POOP");
 assert.equal(dateMath.diff(date, date, 'milliseconds'), 0)
 assert.equal(dateMath.diff(dateMath.subtract(date, 100, 'milliseconds'), date, 'milliseconds'), 100)
 assert.equal(dateMath.diff(date, dateMath.subtract(date, 100, 'milliseconds'), 'milliseconds'), -100)

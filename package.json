@@ -1,8 +1,22 @@
 {
   "name": "joda-date-arithmetic",
   "version": "1.0.0",
-  "description": "Wrapper functionality for js-joda",
+  "description": "Basic Date math via js-joda",
   "main": "index.js",
-  "author": "adam_jung <ajung91@hotmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "keywords": [
+      "math",
+      "js-joda",
+      "react-big-calendar",
+      "joda-big-calendar"
+  ],
+  "dependencies": {
+    "js-joda": "^1.8.2",
+    "js-joda-timezone": "^2.0.0"
+  },
+  "homepage": "https://github.com/adamjung/joda-date-arithmetic",
+  "author": "adam_jung <ajung91@hotmail.com>"
 }

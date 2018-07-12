@@ -1,4 +1,5 @@
-import { ChronoField, ChronoUnit } from 'js-joda'
+const jsJoda = require('js-joda')
+const { ZonedDateTime, ChronoField, ChronoUnit, nativeJs, convert } = jsJoda;
 
 const MILI = 'milliseconds',
   SECONDS = 'seconds',
@@ -24,68 +25,76 @@ const chronoUnitMap = {
   [CENTURY]: ChronoUnit.CENTURIES,
 }
 
-// Assume all *date* values are joda ZonedDateTime instances
-const accessors = {
-  milliseconds: (zdt, val) => {
-    if (val === undefined) return zdt.get(ChronoField.MILLI_OF_SECOND)
-    return zdt.with(ChronoField.MILLI_OF_SECOND, val)
-  },
-  seconds: (zdt, val) => {
-    if (val === undefined) return zdt.second()
-    return zdt.withSecond(val)
-  },
-  minutes: (zdt, val) => {
-    if (val === undefined) return zdt.minute()
-    return zdt.withMinute(val)
-  },
-  // DST
-  hours: (zdt, val) => {
-    if (val === undefined) return zdt.hour()
-    return zdt.withHour(val)
-  },
-  day: (zdt, val) => {
-    if (val === undefined) return zdt.dayOfWeek().value()
+const parseToZDT = (date) => {
+  if (date instanceof ZonedDateTime) {
+    return date;
+  }
 
-    // this is 'undefined' behavior
-    // original date-math tries to use Date.setDay but that is undefined
-    return zdt.with(ChronoField.DAY_OF_WEEK, val)
-  },
+  // nativeJs will work on moment + Date
+  return ZonedDateTime.from(nativeJs(date));
+}
+
+const lib = module.exports = {
+  // Accessors:
+  milliseconds: createAccessor(
+    zdt => zdt.get(ChronoField.MILLI_OF_SECOND),
+    (zdt, val) => zdt.with(ChronoField.MILLI_OF_SECOND, val)
+  ),
+  seconds: createAccessor(
+    zdt => zdt.second(),
+    (zdt, val) => zdt.withSecond(val)
+  ),
+  minutes: createAccessor(
+    zdt => zdt.minute(),
+    (zdt, val) => zdt.withMinute(val)
+  ),
+  // DST
+  hours: createAccessor(
+    zdt => zdt.hour(),
+    (zdt, val) => zdt.withHour(val)
+  ),
+  day: createAccessor(
+    zdt => zdt.dayOfWeek().value() % 7, // joda's week starts on monday (with index 1)
+    (zdt, val) => zdt.with(ChronoField.DAY_OF_WEEK, (val + 6) % 7 + 1)
+  ),
+  // REVISIT - not sure how this is different from above
   weekday: (zdt, val, firstDay) => {
-    const weekday = (zdt.dayOfWeek().value() + 7 - firstDay || 0) % 7
+    const weekday = (zdt.dayOfWeek().value() + 7 - (firstDay || 0)) % 7
     return val === undefined
       ? weekday
       : zdt.plus(val - weekday, ChronoUnit.DAYS)
   },
-  date: (zdt, val) => {
-    if (val === undefined) return zdt.dayOfMonth()
-    return zdt.withDayOfMonth(val)
-  },
-  month: (zdt, val) => {
-    // native javaScript date counts months starting from 0 (january)
-    // joda counts months starting from 1 (january)
-    if (val === undefined) return zdt.monthValue() - 1
-    return zdt.withMonth(val + 1)
-  },
-  year: (zdt, val) => {
-    if (val === undefined) return zdt.year()
-    return zdt.withYear(val)
-  },
-  nativeTime: zdt => {
+  date: createAccessor(
+    zdt => zdt.dayOfMonth(),
+    (zdt, val) => zdt.withDayOfMonth(val)
+  ),
+  month: createAccessor(
+    zdt => zdt.monthValue() -1,
+    (zdt, val) => {
+      return zdt.withMonth(val + 1) // joda counts months starting from 1
+    }
+  ),
+  year: createAccessor(
+    zdt => zdt.year(),
+    (zdt, val) => zdt.withYear(val)
+  ),
+  nativeTime: (zdt) => {
     const milli = zdt.get(ChronoField.MILLI_OF_SECOND)
     const seconds = zdt.get(ChronoField.INSTANT_SECONDS)
     return seconds * 1000 + milli
   },
-}
 
-const maths = {
-  add: (zdt, value, unit) => {
+  // Maths
+  add: (date, value, unit) => {
+    const zdt = parseToZDT(date)
     const chronoUnit = chronoUnitMap[unit]
     if (chronoUnit === undefined) {
       throw new TypeError(`Invalid units when adding: "${unit}"`)
     }
     return zdt.plus(value, chronoUnit)
   },
-  subtract: (zdt, value, unit) => {
+  subtract: (date, value, unit) => {
+    const zdt = parseToZDT(date)
     const chronoUnit = chronoUnitMap[unit]
     if (chronoUnit === undefined) {
       throw new TypeError(`Invalid units when adding: "${unit}"`)
@@ -100,7 +109,8 @@ const maths = {
   lt: createComparer((a, b) => a.isBefore(b)),
   min: function() {
     let min
-    [...arguments].forEach(zdt => {
+    Array.prototype.slice.call(arguments).forEach(date => {
+      const zdt = parseToZDT(date)
       if (!min || zdt.isBefore(min)) {
         min = zdt
       }
@@ -109,7 +119,8 @@ const maths = {
   },
   max: function() {
     let max
-    ;[...arguments].forEach(zdt => {
+    Array.prototype.slice.call(arguments).forEach(date => {
+      const zdt = parseToZDT(date)
       if (!max || zdt.isAfter(max)) {
         max = zdt
       }
@@ -118,6 +129,8 @@ const maths = {
   },
   diff: function(date1, date2, unit, asFloat) {
     let dividend, divisor, result
+    const zdt1 = parseToZDT(date1)
+    const zdt2 = parseToZDT(date2)
 
     // pre-work
     switch (unit) {
@@ -127,16 +140,16 @@ const maths = {
       case HOURS:
       case DAY:
       case WEEK:
-        dividend = accessors.nativeTime(date2) - accessors.nativeTime(date1)
+        dividend = lib.nativeTime(zdt2) - lib.nativeTime(zdt1)
         break
       case MONTH:
       case YEAR:
       case DECADE:
       case CENTURY:
         dividend =
-          (accessors.year(date2) - accessors.year(date1)) * 12 +
-          accessors.month(date2) -
-          accessors.month(date1)
+          (lib.year(zdt2) - lib.year(zdt1)) * 12 +
+          lib.month(zdt2) -
+          lib.month(zdt1)
         break
       default:
         throw new TypeError(`Invalid units for diff: "${unit}"`)
@@ -181,83 +194,83 @@ const maths = {
     result = dividend / divisor
 
     return asFloat ? result : Math.round(result)
-  },
+  }
 }
 
-const inRange = (day, min, max, unit) => {
+// Utility funcs
+module.exports.inRange = (day, min, max, unit) => {
   unit = unit || DAY
 
   return (
-    (!min || maths.gte(day, min, unit)) && (!max || maths.lte(day, max, unit))
+    (!min || lib.gte(day, min, unit)) && (!max || lib.lte(day, max, unit))
   )
 }
 
-// this is confusing, needs specs
-const startOf = (date, unit, firstOfWeek) => {
-  let result = date
+module.exports.startOf = (date, unit, firstOfWeek) => {
+  let result = parseToZDT(date)
+
   // do some pre-work
   switch (unit) {
     case CENTURY:
     case DECADE:
     case YEAR:
-      result = accessors.month(date, 0)
-      break
+      result = lib.month(result, 0)
     case MONTH:
-      result = accessors.date(date, 1)
-      break
+      result = lib.date(result, 1)
     case WEEK:
     case DAY:
       result = result
         .toLocalDate()
         .atStartOfDay()
-        .atZone(date.zone())
-      break
+        .atZone(result.zone())
     case HOURS:
-      result = accessors.minutes(date, 0)
-      break
+      result = lib.minutes(result, 0)
     case MINUTES:
-      result = accessors.seconds(date, 0)
-      break
+      result = lib.seconds(result, 0)
     case SECONDS:
-      result = accessors.milliseconds(date, 0)
-      break
+      result = lib.milliseconds(result, 0)
   }
 
   // additional post-work
   if (unit === DECADE) {
-    result = maths.subtract(result, accessors.year(result) % 10, YEAR)
+    result = lib.subtract(result, lib.year(result) % 10, YEAR)
   }
 
   if (unit === CENTURY) {
-    result = maths.subtract(result, accessors.year(result) % 100, YEAR)
+    result = lib.subtract(result, lib.year(result) % 100, YEAR)
   }
 
   if (unit === WEEK) {
-    result = accessors.weekday(result, 0, firstOfWeek)
+    result = lib.weekday(result, 0, firstOfWeek)
   }
 
   return result
 }
 
 // this is confusing, needs specs
-const endOf = (date, unit, firstOfWeek) => {
-  let result = date
-  result = startOf(date, unit, firstOfWeek)
-  result = maths.add(result, 1, unit)
-  result = maths.subtract(result, 1, MILI)
+module.exports.endOf = (date, unit, firstOfWeek) => {
+  let result = parseToZDT(date)
+  result = lib.startOf(result, unit, firstOfWeek)
+  result = lib.add(result, 1, unit)
+  result = lib.subtract(result, 1, MILI)
   return result
 }
 
-export default {
-  startOf,
-  endOf,
-  inRange,
-  ...accessors,
-  ...maths,
+function createComparer(comparer) {
+  return function(a, b, unit) {
+    const zdtA = parseToZDT(a)
+    const zdtB = parseToZDT(b)
+    return comparer(lib.startOf(zdtA, unit), lib.startOf(zdtB, unit))
+  }
 }
 
-function createComparer(operator) {
-  return function(a, b, unit) {
-    return operator(startOf(a, unit), startOf(b, unit))
+function createAccessor(getter, setter) {
+  return function(date, setValue) {
+    const zdt = parseToZDT(date);
+    if (setValue || setValue === 0) {
+      return setter(zdt, setValue)
+    }
+
+    return getter(zdt)
   }
 }
