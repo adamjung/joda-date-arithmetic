@@ -92,7 +92,6 @@ assert.ok(!dateMath.inRange(new Date(2013,0,1,0,0,0,0), date,  new Date(2014,5,1
 assert.ok(dateMath.inRange(date,  null,  new Date(2014,5,1,0,0,0,0)), 'inRange year')
 assert.ok(dateMath.inRange(date,  new Date(2013,0,1,0,0,0,0), null),  'inRange year')
 
-console.log("POOP");
 assert.equal(dateMath.diff(date, date, 'milliseconds'), 0)
 assert.equal(dateMath.diff(dateMath.subtract(date, 100, 'milliseconds'), date, 'milliseconds'), 100)
 assert.equal(dateMath.diff(date, dateMath.subtract(date, 100, 'milliseconds'), 'milliseconds'), -100)
@@ -121,6 +120,6 @@ assert.equal(dateMath.diff(dateMath.subtract(date, 101, 'year'), date, 'century'
 assert.equal(dateMath.diff(dateMath.subtract(date, 201, 'year'), date, 'century'), 2)
 assert.throws(function () {
     dateMath.diff(dateMath.subtract(date, 201, 'year'), date, 'unknown');
-}, /Invalid units: "unknown"/);
+}, /Invalid units for diff: "unknown"/);
 
 console.log(' passed')
