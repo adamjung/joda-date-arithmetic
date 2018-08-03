@@ -26,7 +26,7 @@ const chronoUnitMap = {
 }
 
 const parseToZDT = (date) => {
-  if (date instanceof ZonedDateTime) {
+  if (date instanceof ZonedDateTime || (date.zone && date.zone())) {
     return date;
   }
 
