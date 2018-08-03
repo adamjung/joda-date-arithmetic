@@ -1,4 +1,4 @@
-const jsJoda = require('js-joda')
+const jsJoda = require('js-joda').use(require('js-joda-timezone'))
 const { ZonedDateTime, ChronoField, ChronoUnit, nativeJs, convert } = jsJoda;
 
 const MILI = 'milliseconds',

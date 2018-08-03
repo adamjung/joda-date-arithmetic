@@ -8,10 +8,10 @@
     "test": "node test.js"
   },
   "keywords": [
-      "math",
-      "js-joda",
-      "react-big-calendar",
-      "joda-big-calendar"
+    "math",
+    "js-joda",
+    "react-big-calendar",
+    "joda-big-calendar"
   ],
   "dependencies": {
     "js-joda": "^1.8.2",
